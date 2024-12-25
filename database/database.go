@@ -17,7 +17,7 @@ type Dbinstance struct {
 
 var DB Dbinstance
 
-// connecting to postgres db uisng gorm
+// connecting to postgres db using gorm
 func ConnectDb() {
 	dsn := fmt.Sprintf(
 		"host=db user=%s password=%s dbname=%s port=5432 sslmode=disable TimeZone=Asia/Singapore",
@@ -39,7 +39,7 @@ func ConnectDb() {
 	db.Logger = logger.Default.LogMode(logger.Info)
 
 	log.Println("running migrations")
-	db.AutoMigrate(&models.RunningEvents{})
+	db.AutoMigrate(&models.RunningEvents{}, &models.User{})
 
 	DB = Dbinstance{
 		Db: db,

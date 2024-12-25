@@ -2,6 +2,7 @@
 .env
 
 # Temporary files
+tmp
 temp
 
 # Binaries
