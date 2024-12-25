@@ -5,3 +5,6 @@ clean-port:
 
 enter-dock: clean-port
 	docker compose run --service-ports web bash
+
+run-dock: clean-port
+	docker compose up --build
