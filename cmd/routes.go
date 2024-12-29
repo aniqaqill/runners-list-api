@@ -1,21 +1,23 @@
 package main
 
 import (
-	"github.com/aniqaqill/runners-list/handlers"
-	"github.com/aniqaqill/runners-list/middleware"
+	"github.com/aniqaqill/runners-list/internal/adapter/http"
+	"github.com/aniqaqill/runners-list/internal/adapter/middleware"
 	"github.com/gofiber/fiber/v2"
 )
 
-// setupRoutes sets up the routes
-func setupRoutes(app *fiber.App) {
-	app.Get("/", handlers.Home)
-	app.Get("/events", handlers.ListEvents)
+func setupRoutes(app *fiber.App, eventHandler *http.EventHandler, userHandler *http.UserHandler) {
+	// Public routes
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("API is working!")
+	})
+	app.Get("/events", eventHandler.ListEvents)
 
 	// User registration and login routes
-	app.Post("/register", handlers.Register)
-	app.Post("/login", handlers.Login)
+	app.Post("/register", userHandler.Register)
+	app.Post("/login", userHandler.Login)
 
-	// Apply JWT middleware to protect POST and DELETE routes
-	app.Post("/create-events", middleware.JWTProtected(), middleware.ValidateCreateEventInput, handlers.CreateEvents)
-	app.Delete("/events/:id", middleware.JWTProtected(), handlers.DeleteEvents)
+	// Protected routes (JWT middleware)
+	app.Post("/create-events", middleware.JWTProtected(), middleware.ValidateCreateEventInput, eventHandler.CreateEvent)
+	app.Delete("/events/:id", middleware.JWTProtected(), eventHandler.DeleteEvent)
 }

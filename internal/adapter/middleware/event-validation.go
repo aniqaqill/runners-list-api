@@ -3,23 +3,16 @@ package middleware
 import (
 	"time"
 
+	"github.com/aniqaqill/runners-list/internal/core/domain"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
 var validate = validator.New()
 
-type EventInput struct {
-	Name             string `json:"name" validate:"required"`
-	Location         string `json:"location" validate:"required"`
-	Date             string `json:"date" validate:"required,datetime=2006-01-02"`
-	Description      string `json:"description" validate:"required"`
-	RegisterationURL string `json:"registration_url" validate:"required,url"`
-}
-
 // ValidateCreateEventInput validates the input for creating an event
 func ValidateCreateEventInput(c *fiber.Ctx) error {
-	var input EventInput
+	var input domain.Events
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   true,
@@ -48,3 +41,6 @@ func ValidateCreateEventInput(c *fiber.Ctx) error {
 
 	return c.Next()
 }
+
+/* Middleware is used to intercept and process HTTP requests and responses before they reach the main handler or after the handler has processed them.
+It acts as a filter or pre-processor for HTTP requests. */

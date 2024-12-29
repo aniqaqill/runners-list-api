@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/aniqaqill/runners-list/models"
+	"github.com/aniqaqill/runners-list/internal/core/domain"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -39,7 +39,7 @@ func ConnectDb() {
 	db.Logger = logger.Default.LogMode(logger.Info)
 
 	log.Println("running migrations")
-	db.AutoMigrate(&models.RunningEvents{}, &models.User{})
+	db.AutoMigrate(&domain.Events{}, &domain.Users{})
 
 	DB = Dbinstance{
 		Db: db,
