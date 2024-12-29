@@ -23,22 +23,21 @@ func main() {
 
 	// Initialize repositories
 	eventRepo := repository.NewGormEventRepository(database.DB.Db)
-	// userRepo := repository.NewGormUserRepository(database.DB.Db)
+	userRepo := repository.NewGormUserRepository(database.DB.Db)
 
 	// Initialize services
 	eventService := service.NewEventService(eventRepo)
-	// userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo)
 
 	// Initialize handlers
 	eventHandler := http.NewEventHandler(eventService)
-	// userHandler := http.NewUserHandler(userService)
+	userHandler := http.NewUserHandler(userService)
 
 	// Initialize Fiber app
 	app := fiber.New()
 
 	// Set up routes
-	setupRoutes(app, eventHandler)
-	// setupRoutes(app, eventHandler, userHandler)
+	setupRoutes(app, eventHandler, userHandler)
 
 	// Start the server
 	log.Fatal(app.Listen(":8080"))

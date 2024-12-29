@@ -1,37 +1,53 @@
 package service
 
-// import (
-// 	"github.com/aniqaqill/runners-list/internal/core/domain"
-// 	"github.com/aniqaqill/runners-list/internal/port"
-// 	"golang.org/x/crypto/bcrypt"
-// )
+import (
+	"errors"
 
-// type UserService struct {
-// 	repo port.UserRepository
-// }
+	"github.com/aniqaqill/runners-list/internal/core/domain"
+	"github.com/aniqaqill/runners-list/internal/port"
+	"golang.org/x/crypto/bcrypt"
+)
 
-// func NewUserService(repo port.UserRepository) *UserService {
-// 	return &UserService{repo: repo}
-// }
+type UserService struct {
+	repo port.UserRepository
+}
 
-// func (s *UserService) Register(username, password string) error {
-// 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
-// 	user := &domain.User{
-// 		Username: username,
-// 		Password: string(hashedPassword),
-// 	}
-// 	return s.repo.Save(user)
-// }
+func NewUserService(repo port.UserRepository) *UserService {
+	return &UserService{repo: repo}
+}
 
-// func (s *UserService) Login(username, password string) (*domain.User, error) {
-// 	user, err := s.repo.FindByUsername(username)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (s *UserService) Register(username, password string) error {
+	// Check if the username already exists
+	existingUser, _ := s.repo.FindByUsername(username)
+	if existingUser != nil {
+		return errors.New("username already exists")
+	}
 
-// 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-// 		return nil, err
-// 	}
+	// Hash the password
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
+	user := &domain.Users{
+		Username: username,
+		Password: string(hashedPassword),
+	}
 
-// 	return user, nil
-// }
+	// Create the user
+	return s.repo.Create(user)
+}
+
+func (s *UserService) GetUserByUsername(username string) (*domain.Users, error) {
+	return s.repo.FindByUsername(username)
+}
+
+func (s *UserService) Login(username, password string) (*domain.Users, error) {
+	user, err := s.repo.FindByUsername(username)
+	if err != nil {
+		return nil, errors.New("invalid credentials")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, errors.New("invalid credentials")
+	}
+
+	return user, nil
+}
