@@ -1,12 +1,11 @@
 package http
 
 import (
-	"os"
-	"time"
+	"errors"
 
+	"github.com/aniqaqill/runners-list/internal/core/domain"
 	"github.com/aniqaqill/runners-list/internal/core/service"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 // UserHandler handles HTTP requests related to user operations
@@ -21,10 +20,10 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
 
 // Register handles user registration
 func (h *UserHandler) Register(c *fiber.Ctx) error {
-	var data map[string]string
+	var user domain.Users
 
-	// Parse the request body into the data map
-	if err := c.BodyParser(&data); err != nil {
+	// Parse the request body
+	if err := c.BodyParser(&user); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   true,
 			"message": "Invalid input format",
@@ -32,8 +31,8 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 	}
 
 	// Call the UserService to register the user
-	if err := h.userService.Register(data["username"], data["password"]); err != nil {
-		if err.Error() == "username already exists" {
+	if err := h.userService.Register(user.Username, user.Password); err != nil {
+		if errors.Is(err, service.ErrUsernameAlreadyExists) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 				"error":   true,
 				"message": "Username already exists",
@@ -52,11 +51,11 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 	})
 }
 
-// Login handles user login
+// Handle login
 func (h *UserHandler) Login(c *fiber.Ctx) error {
 	var data map[string]string
 
-	// Parse the request body into the data map
+	// Parse the request body
 	if err := c.BodyParser(&data); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   true,
@@ -67,21 +66,20 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	// Call the UserService to authenticate the user
 	user, err := h.userService.Login(data["username"], data["password"])
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   true,
+				"message": "Invalid credentials",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   true,
-			"message": "Invalid credentials",
+			"message": "Failed to login",
 		})
 	}
 
-	// Create the JWT claims, including the username and expiration time
-	claims := jwt.MapClaims{
-		"name": user.Username,
-		"exp":  time.Now().AddDate(0, 1, 0).Unix(), // Adds 1 month to the current time
-	}
-
-	// Create the JWT token with the claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	// Call the UserService to create the JWT token
+	token, err := h.userService.CreateToken(user.Username)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   true,
@@ -93,6 +91,6 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"error":   false,
 		"message": "Success",
-		"token":   t,
+		"token":   token,
 	})
 }

@@ -28,10 +28,23 @@ func (h *EventHandler) CreateEvent(c *fiber.Ctx) error {
 	}
 
 	if err := h.eventService.CreateEvent(&event); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   true,
-			"message": "Failed to create event",
-		})
+		switch err {
+		case service.ErrEventDateInPast:
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error":   true,
+				"message": "Event date must be in the future",
+			})
+		case service.ErrEventNameNotUnique:
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error":   true,
+				"message": "Event name must be unique",
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error":   true,
+				"message": "Failed to create event",
+			})
+		}
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -78,3 +91,6 @@ func (h *EventHandler) DeleteEvent(c *fiber.Ctx) error {
 		"message": "Event deleted successfully",
 	})
 }
+
+/* The HTTP layer handles incoming HTTP requests and maps them to the appropriate service methods.
+It acts as an adapter between the external world (HTTP clients) and the core logic. */

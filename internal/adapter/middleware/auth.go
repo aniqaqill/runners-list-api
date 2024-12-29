@@ -3,9 +3,64 @@ package middleware
 import (
 	"os"
 
+	"github.com/aniqaqill/runners-list/internal/core/domain"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 )
+
+// ValidateRegisterInput validates the input for user registration
+func ValidateRegisterInput(c *fiber.Ctx) error {
+	var input domain.Users
+
+	// Parse the request body
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   true,
+			"message": "Invalid input format",
+		})
+	}
+
+	// Validate the input using the validator library
+	if err := validate.Struct(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   true,
+			"message": "Validation failed",
+			"details": err.Error(),
+		})
+	}
+
+	// Store the validated input in the context for use in the handler
+	c.Locals("registerInput", input)
+
+	return c.Next()
+}
+
+// ValidateLoginInput validates the input for user login
+func ValidateLoginInput(c *fiber.Ctx) error {
+	var input domain.Users
+
+	// Parse the request body
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   true,
+			"message": "Invalid input format",
+		})
+	}
+
+	// Validate the input using the validator library
+	if err := validate.Struct(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   true,
+			"message": "Validation failed",
+			"details": err.Error(),
+		})
+	}
+
+	// Store the validated input in the context for use in the handler
+	c.Locals("loginInput", input)
+
+	return c.Next()
+}
 
 // JWTProtected protects routes with JWT authentication
 func JWTProtected() fiber.Handler {

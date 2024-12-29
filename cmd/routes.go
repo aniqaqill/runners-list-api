@@ -9,7 +9,7 @@ import (
 func setupRoutes(app *fiber.App, eventHandler *http.EventHandler, userHandler *http.UserHandler) {
 	// Public routes
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Running App!")
+		return c.SendString("API is working!")
 	})
 	app.Get("/events", eventHandler.ListEvents)
 

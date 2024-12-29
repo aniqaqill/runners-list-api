@@ -41,3 +41,6 @@ func ValidateCreateEventInput(c *fiber.Ctx) error {
 
 	return c.Next()
 }
+
+/* Middleware is used to intercept and process HTTP requests and responses before they reach the main handler or after the handler has processed them.
+It acts as a filter or pre-processor for HTTP requests. */

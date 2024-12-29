@@ -11,3 +11,5 @@ type Events struct {
 	Description      string `json:"description" gorm:"type:text" validate:"omitempty"`
 	RegisterationURL string `json:"registration_url" gorm:"type:text;not null" validate:"required,url"`
 }
+
+// The domain layer contains the core business logic and models. It defines the entities and interfaces (ports) that represent the business rules.

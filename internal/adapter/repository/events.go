@@ -33,3 +33,12 @@ func (r *GormEventRepository) FindByID(id uint) (*domain.Events, error) {
 func (r *GormEventRepository) Delete(event *domain.Events) error {
 	return r.db.Delete(event).Error
 }
+
+func (r *GormEventRepository) EventNameExists(name string) bool {
+	var event domain.Events
+	err := r.db.Where("name = ?", name).First(&event).Error
+	return err == nil
+}
+
+/* The repository layer implements the interfaces (ports) defined in the port layer.
+It interacts with external systems (e.g., databases) and provides data to the service layer. */

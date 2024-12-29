@@ -8,6 +8,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var (
+	ErrUsernameAlreadyExists = errors.New("username already exists")
+	ErrInvalidCredentials    = errors.New("invalid credentials")
+)
+
 type UserService struct {
 	repo port.UserRepository
 }
@@ -20,7 +25,7 @@ func (s *UserService) Register(username, password string) error {
 	// Check if the username already exists
 	existingUser, _ := s.repo.FindByUsername(username)
 	if existingUser != nil {
-		return errors.New("username already exists")
+		return ErrUsernameAlreadyExists
 	}
 
 	// Hash the password
@@ -41,12 +46,12 @@ func (s *UserService) GetUserByUsername(username string) (*domain.Users, error) 
 func (s *UserService) Login(username, password string) (*domain.Users, error) {
 	user, err := s.repo.FindByUsername(username)
 	if err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, ErrInvalidCredentials
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, ErrInvalidCredentials
 	}
 
 	return user, nil
