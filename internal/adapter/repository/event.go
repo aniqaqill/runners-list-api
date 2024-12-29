@@ -14,22 +14,22 @@ func NewGormEventRepository(db *gorm.DB) port.EventRepository {
 	return &GormEventRepository{db: db}
 }
 
-func (r *GormEventRepository) Save(event *domain.RunningEvents) error {
+func (r *GormEventRepository) Create(event *domain.Events) error {
 	return r.db.Create(event).Error
 }
 
-func (r *GormEventRepository) FindAll() ([]domain.RunningEvents, error) {
-	var events []domain.RunningEvents
+func (r *GormEventRepository) FindAll() ([]domain.Events, error) {
+	var events []domain.Events
 	err := r.db.Find(&events).Error
 	return events, err
 }
 
-func (r *GormEventRepository) FindByID(id uint) (*domain.RunningEvents, error) {
-	var event domain.RunningEvents
+func (r *GormEventRepository) FindByID(id uint) (*domain.Events, error) {
+	var event domain.Events
 	err := r.db.First(&event, id).Error
 	return &event, err
 }
 
-func (r *GormEventRepository) Delete(event *domain.RunningEvents) error {
+func (r *GormEventRepository) Delete(event *domain.Events) error {
 	return r.db.Delete(event).Error
 }

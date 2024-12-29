@@ -2,12 +2,12 @@ package domain
 
 import "gorm.io/gorm"
 
-// models for the running events data
-type RunningEvents struct {
+// Events represents the running events data
+type Events struct {
 	gorm.Model
-	Name             string `json:"name" gorm:"type:text;not null"`
-	Location         string `json:"location" gorm:"type:text;not null"`
-	Date             string `json:"date" gorm:"type:text;not null"`
-	Description      string `json:"description" gorm:"type:text;not null"`
-	RegisterationURL string `json:"registration_url" gorm:"type:text;not null"`
+	Name             string `json:"name" gorm:"type:text;not null" validate:"required"`
+	Location         string `json:"location" gorm:"type:text;not null" validate:"required"`
+	Date             string `json:"date" gorm:"type:text;not null" validate:"required,datetime=2006-01-02"`
+	Description      string `json:"description" gorm:"type:text" validate:"omitempty"`
+	RegisterationURL string `json:"registration_url" gorm:"type:text;not null" validate:"required,url"`
 }
