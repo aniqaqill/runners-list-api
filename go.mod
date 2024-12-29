@@ -7,7 +7,6 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/joho/godotenv v1.5.1
-	golang.org/x/crypto v0.30.0
 	gorm.io/gorm v1.25.12
 )
 
@@ -20,6 +19,7 @@ require (
 	github.com/jackc/pgx/v5 v5.5.5 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	golang.org/x/crypto v0.30.0 // indirect
 	golang.org/x/net v0.32.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 )

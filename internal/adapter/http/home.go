@@ -1,4 +1,4 @@
-package handlers
+package http
 
 import (
 	"github.com/gofiber/fiber/v2"
