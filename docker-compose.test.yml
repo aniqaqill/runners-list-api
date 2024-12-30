@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  web:
+    container_name: runners-list-api-test
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    env_file:
+      - .env
+  db:
+    container_name: runners-list-db-test
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres-db-test:/var/lib/postgresql/data
+
+volumes:
+  postgres-db-test:

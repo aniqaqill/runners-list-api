@@ -1,18 +1,17 @@
 services:
   web:
-    container_name: runners-list-api
-    build: 
+    container_name: runners-list-api-prod
+    build:
       context: .
       dockerfile: Dockerfile
+      target: prod
     env_file:
       - .env
     ports:
       - "8080:8080"
-    volumes:
-      - .:/usr/src/app
-    command: air ./cmd/main.go -b 0.0.0.0
+    restart: unless-stopped
   db:
-    container_name: runners-list-db
+    container_name: runners-list-db-prod
     image: postgres:alpine
     environment:
       - POSTGRES_USER=${DB_USER}
@@ -21,7 +20,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-db:/var/lib/postgresql/data
+      - postgres-db-prod:/var/lib/postgresql/data
+    restart: unless-stopped
 
 volumes:
-  postgres-db:
+  postgres-db-prod:

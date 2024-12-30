@@ -1,0 +1,28 @@
+services:
+  web:
+    container_name: runners-list-api-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/usr/src/app
+    command: air ./cmd/main.go -b 0.0.0.0
+  db:
+    container_name: runners-list-db-dev
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-db-dev:/var/lib/postgresql/data
+
+volumes:
+  postgres-db-dev:
