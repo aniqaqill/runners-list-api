@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -8,6 +9,17 @@ import (
 )
 
 func (s *UserService) CreateToken(username string) (string, error) {
+	// Validate the username
+	if username == "" {
+		return "", errors.New("username cannot be empty")
+	}
+
+	// Check if JWT_SECRET is set
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return "", errors.New("JWT_SECRET environment variable is not set")
+	}
+
 	// Create the JWT claims, including the username and expiration time
 	claims := jwt.MapClaims{
 		"name": username,
@@ -16,5 +28,12 @@ func (s *UserService) CreateToken(username string) (string, error) {
 
 	// Create the JWT token with the claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+
+	// Sign the token with the secret key
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", errors.New("failed to sign the token")
+	}
+
+	return tokenString, nil
 }

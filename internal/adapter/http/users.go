@@ -53,10 +53,10 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 
 // Handle login
 func (h *UserHandler) Login(c *fiber.Ctx) error {
-	var data map[string]string
+	var user domain.Users
 
 	// Parse the request body
-	if err := c.BodyParser(&data); err != nil {
+	if err := c.BodyParser(&user); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   true,
 			"message": "Invalid input format",
@@ -64,7 +64,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	}
 
 	// Call the UserService to authenticate the user
-	user, err := h.userService.Login(data["username"], data["password"])
+	authenticatedUser, err := h.userService.Login(user.Username, user.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -79,7 +79,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	}
 
 	// Call the UserService to create the JWT token
-	token, err := h.userService.CreateToken(user.Username)
+	token, err := h.userService.CreateToken(authenticatedUser.Username)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   true,

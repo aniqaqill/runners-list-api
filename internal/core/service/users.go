@@ -2,10 +2,12 @@ package service
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/aniqaqill/runners-list/internal/core/domain"
 	"github.com/aniqaqill/runners-list/internal/port"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 var (
@@ -23,20 +25,32 @@ func NewUserService(repo port.UserRepository) *UserService {
 
 func (s *UserService) Register(username, password string) error {
 	// Check if the username already exists
-	existingUser, _ := s.repo.FindByUsername(username)
+	existingUser, err := s.repo.FindByUsername(username)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		// Return an error if the query fails (other than "record not found")
+		return fmt.Errorf("failed to check username: %w", err)
+	}
 	if existingUser != nil {
+		// Return a conflict error if the username already exists
 		return ErrUsernameAlreadyExists
 	}
 
 	// Hash the password
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
-	user := &domain.Users{
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	// Create the new user
+	newUser := &domain.Users{
 		Username: username,
 		Password: string(hashedPassword),
 	}
+	if err := s.repo.Create(newUser); err != nil {
+		return fmt.Errorf("failed to create user: %w", err)
+	}
 
-	// Create the user
-	return s.repo.Create(user)
+	return nil
 }
 
 func (s *UserService) GetUserByUsername(username string) (*domain.Users, error) {

@@ -27,9 +27,10 @@ WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app/app .
 COPY --from=builder /usr/src/app/.env .
 CMD ["./app"]
+
 # Testing stage
-FROM base AS test
-COPY . .
-RUN go mod download
-RUN go mod tidy
-RUN go test -v ./...
+FROM builder AS test
+RUN go install github.com/onsi/ginkgo/v2/ginkgo@latest
+RUN go install github.com/golang/mock/mockgen@latest
+WORKDIR /app
+CMD ["ginkgo", "-r", "--cover", "--coverprofile=coverage.out", "--trace", "--show-node-events"]
