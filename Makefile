@@ -25,6 +25,23 @@ up-test:
 	@echo "Starting testing environment..."
 	docker-compose -f docker-compose.test.yml up --build
 
+generate-mocks:
+	@echo "Generating mock files..."
+	@if ! command -v mockgen &> /dev/null; then \
+		echo "mockgen not found. Installing mockgen..."; \
+		go install github.com/golang/mock/mockgen@latest; \
+	fi
+	@mkdir -p internal/port/mocks
+	mockgen -source=internal/port/events.go -destination=internal/port/mocks/events_mock.go -package=mocks
+	mockgen -source=internal/port/users.go -destination=internal/port/mocks/users_mock.go -package=mocks
+
+unit-test: generate-mocks
+	@echo "Running tests and generating coverage report..."
+	-go test -tags=test -coverprofile=coverage.out -coverpkg=./internal/core/service,./internal/core/domain ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Opening coverage report in the default browser..."
+	@open coverage.html || xdg-open coverage.html || start coverage.html || echo "Failed to open coverage.html"
+
 down-test:
 	@echo "Stopping testing environment..."
 	docker-compose -f docker-compose.test.yml down
@@ -39,6 +56,11 @@ clean-port:
 	@echo "Cleaning port 8080..."
 	@lsof -ti :8080 | xargs kill -9 || echo "Port 8080 is already free."
 
+# Clean up mock files
+clean-mocks:
+	@echo "Cleaning up mock files..."
+	@rm -rf internal/port/mocks
+
 # Help command
 help:
 	@echo "Available commands:"
@@ -49,6 +71,9 @@ help:
 	@echo "  down-prod   - Stop the production environment."
 	@echo "  up-test     - Start the testing environment."
 	@echo "  down-test   - Stop the testing environment."
-	@echo "  clean       - Clean up unused Docker resources."
-	@echo "  clean-port  - Clean unwanted port bindings 8080."
-	@echo "  help        - Show this help message."
+	@echo "  generate-mocks - Generate mock files for testing."
+	@echo "  unit-test    - Run unit tests and generate coverage report."
+	@echo "  clean        - Clean up unused Docker resources."
+	@echo "  clean-port   - Clean unwanted port bindings 8080."
+	@echo "  clean-mocks  - Clean up mock files."
+	@echo "  help         - Show this help message."

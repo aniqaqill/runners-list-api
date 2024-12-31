@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/aniqaqill/runners-list/internal/core/domain"
 	"github.com/aniqaqill/runners-list/internal/port"
 	"gorm.io/gorm"
@@ -24,6 +26,13 @@ func (r *GormUserRepository) Create(user *domain.Users) error {
 // FindByUsername retrieves a user by their username
 func (r *GormUserRepository) FindByUsername(username string) (*domain.Users, error) {
 	var user domain.Users
-	err := r.db.Where("username = ?", username).First(&user).Error
-	return &user, err
+	if err := r.db.Where("username = ?", username).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Return nil if the user is not found
+			return nil, nil
+		}
+		// Return the error for other cases
+		return nil, err
+	}
+	return &user, nil
 }

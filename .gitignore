@@ -24,3 +24,10 @@ vendor/
 .idea/
 *.swp
 *.swo
+
+# Ignore generated mock files
+# internal/**/mocks/
+
+# Ignore generated test files
+coverage.html
+coverage.out
