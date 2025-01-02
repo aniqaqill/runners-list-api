@@ -35,6 +35,10 @@ generate-mocks:
 	mockgen -source=internal/port/events.go -destination=internal/port/mocks/events_mock.go -package=mocks
 	mockgen -source=internal/port/users.go -destination=internal/port/mocks/users_mock.go -package=mocks
 
+
+#if mock not availabe ensure it install in you gopath
+#go install github.com/golang/mock/mockgen@v1.6.0
+#export PATH=$PATH:$(go env GOPATH)/bin
 unit-test: generate-mocks
 	@echo "Running tests and generating coverage report..."
 	-go test -tags=test -coverprofile=coverage.out -coverpkg=./internal/core/service,./internal/core/domain ./...
