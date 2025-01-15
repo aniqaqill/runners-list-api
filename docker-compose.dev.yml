@@ -12,6 +12,8 @@ services:
     volumes:
       - .:/usr/src/app
     command: air ./cmd/main.go -b 0.0.0.0
+    depends_on:
+      - db
   db:
     container_name: runners-list-db-dev
     image: postgres:alpine

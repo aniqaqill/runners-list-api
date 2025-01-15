@@ -40,7 +40,6 @@ generate-mocks:
 #go install github.com/golang/mock/mockgen@v1.6.0
 #export PATH=$PATH:$(go env GOPATH)/bin
 unit-test: generate-mocks
-unit-test: generate-mocks
 	@echo "Running tests and generating coverage report..."
 	-go test -tags=test -coverprofile=coverage.out -coverpkg=./internal/adapter/middleware,./internal/core/service,./internal/core/domain ./...
 	go tool cover -html=coverage.out -o coverage.html
