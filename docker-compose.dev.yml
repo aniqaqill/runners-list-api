@@ -16,7 +16,7 @@ services:
       - db
   db:
     container_name: runners-list-db-dev
-    image: postgres:alpine
+    image: postgres:latest
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
