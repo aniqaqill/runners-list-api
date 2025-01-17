@@ -16,6 +16,7 @@ func setupRoutes(app *fiber.App, eventHandler *http.EventHandler, userHandler *h
 	// User registration and login routes
 	app.Post("/register", userHandler.Register)
 	app.Post("/login", userHandler.Login)
+	app.Get("/users", userHandler.ListUsers)
 
 	// Protected routes (JWT middleware)
 	app.Post("/create-events", middleware.JWTProtected(), middleware.ValidateCreateEventInput, eventHandler.CreateEvent)

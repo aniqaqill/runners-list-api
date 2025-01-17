@@ -36,3 +36,10 @@ func (r *GormUserRepository) FindByUsername(username string) (*domain.Users, err
 	}
 	return &user, nil
 }
+
+// Find All existing user
+func (r *GormUserRepository) FindAll() ([]domain.Users, error) {
+	var users []domain.Users
+	err := r.db.Find(&users).Error
+	return users, err
+}

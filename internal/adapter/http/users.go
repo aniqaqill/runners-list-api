@@ -94,3 +94,20 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 		"token":   token,
 	})
 }
+
+// ListUsers handles listing all users
+// ListUsers handles listing all users
+func (h *UserHandler) ListUsers(c *fiber.Ctx) error {
+	users, err := h.userService.ListUsers()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   true,
+			"message": "Failed to retrieve users",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"error": false,
+		"data":  users,
+	})
+}

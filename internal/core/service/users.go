@@ -70,3 +70,8 @@ func (s *UserService) Login(username, password string) (*domain.Users, error) {
 
 	return user, nil
 }
+
+// list all user
+func (s *UserService) ListUsers() ([]domain.Users, error) {
+	return s.repo.FindAll()
+}
