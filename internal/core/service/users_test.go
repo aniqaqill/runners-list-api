@@ -151,4 +151,33 @@ var _ = Describe("UserService", func() {
 			Expect(result).To(Equal(user))
 		})
 	})
+
+	Describe("ListUsers", func() {
+		It("should return all users", func() {
+			users := []domain.Users{
+				{Username: "user1"},
+				{Username: "user2"},
+			}
+
+			// Mock the FindAll method to return the list of users
+			mockRepo.EXPECT().
+				FindAll().
+				Return(users, nil)
+
+			result, err := userService.ListUsers()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(Equal(users))
+		})
+
+		It("should return an error if there is an issue retrieving users", func() {
+			// Mock the FindAll method to return an error
+			mockRepo.EXPECT().
+				FindAll().
+				Return(nil, errors.New("failed to retrieve users"))
+
+			_, err := userService.ListUsers()
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("failed to retrieve users"))
+		})
+	})
 })
