@@ -79,7 +79,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	}
 
 	// Call the UserService to create the JWT token
-	token, err := h.userService.CreateToken(authenticatedUser.Username)
+	token, err := h.userService.CreateToken(int(authenticatedUser.ID))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   true,
@@ -95,7 +95,6 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	})
 }
 
-// ListUsers handles listing all users
 // ListUsers handles listing all users
 func (h *UserHandler) ListUsers(c *fiber.Ctx) error {
 	users, err := h.userService.ListUsers()

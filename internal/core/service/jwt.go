@@ -8,22 +8,21 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func (s *UserService) CreateToken(username string) (string, error) {
-	// Validate the username
-	if username == "" {
-		return "", errors.New("username cannot be empty")
+func (s *UserService) CreateToken(ID int) (string, error) {
+	// Validate the ID
+	if ID <= 0 {
+		return "", errors.New("ID cannot be negative or zero")
 	}
-
 	// Check if JWT_SECRET is set
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		return "", errors.New("JWT_SECRET environment variable is not set")
 	}
 
-	// Create the JWT claims, including the username and expiration time
+	// Create the JWT claims, including the ID and expiration time
 	claims := jwt.MapClaims{
-		"name": username,                           // need to change to primarykey
-		"exp":  time.Now().AddDate(0, 1, 0).Unix(), // Adds 1 month to the current time
+		"id":  ID,
+		"exp": time.Now().AddDate(0, 1, 0).Unix(), // Adds 1 month to the current time
 	}
 
 	// Create the JWT token with the claims
