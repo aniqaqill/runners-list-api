@@ -20,9 +20,9 @@ generate-mocks:
 #if mock not availabe ensure it install in you gopath
 #go install github.com/golang/mock/mockgen@v1.6.0
 #export PATH=$PATH:$(go env GOPATH)/bin <- prev not working always hv to initalize but once added to zhrchrc it will work 
-# export PATH=$PATH:$(go env GOPATH)/bin >> ~/.zshrc
+#export PATH=$PATH:$(go env GOPATH)/bin >> ~/.zshrc
 unit-test: generate-mocks
-	@echo "Running tests and generating coverage report..."export PATH=$PATH:$(go env GOPATH)/bin >> ~/.zshrc
+	@echo "Running tests and generating coverage report..."
 	-go test -tags=test -coverprofile=coverage.out -coverpkg=./internal/adapter/middleware,./internal/core/service,./internal/core/domain ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Opening coverage report in the default browser..."
