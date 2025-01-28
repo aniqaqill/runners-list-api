@@ -11,14 +11,17 @@ func setupRoutes(app *fiber.App, eventHandler *http.EventHandler, userHandler *h
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("API is working!")
 	})
+
 	app.Get("/events", eventHandler.ListEvents)
+	app.Get("/users", userHandler.ListUsers)
 
 	// User registration and login routes
 	app.Post("/register", userHandler.Register)
 	app.Post("/login", userHandler.Login)
-	app.Get("/users", userHandler.ListUsers)
 
 	// Protected routes (JWT middleware)
-	app.Post("/create-events", middleware.JWTProtected(), middleware.ValidateCreateEventInput, eventHandler.CreateEvent)
-	app.Delete("/events/:id", middleware.JWTProtected(), eventHandler.DeleteEvent)
+	protected := app.Group("/protected", middleware.JWTProtected())
+
+	protected.Post("/events/create-events", middleware.ValidateCreateEventInput, eventHandler.CreateEvent)
+	protected.Delete("/events/:id", eventHandler.DeleteEvent)
 }

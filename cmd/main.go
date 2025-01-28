@@ -13,8 +13,7 @@ import (
 
 func main() {
 	// Load environment variables
-	err := godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
@@ -33,12 +32,16 @@ func main() {
 	eventHandler := http.NewEventHandler(eventService)
 	userHandler := http.NewUserHandler(userService)
 
-	// Initialize Fiber app
+	// Initialize and start Fiber app
+	if err := runFiberServer(eventHandler, userHandler); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func runFiberServer(eventHandler *http.EventHandler, userHandler *http.UserHandler) error {
 	app := fiber.New()
 
-	// Set up routes
 	setupRoutes(app, eventHandler, userHandler)
 
-	// Start the server
-	log.Fatal(app.Listen(":8080"))
+	return app.Listen(":8080")
 }
