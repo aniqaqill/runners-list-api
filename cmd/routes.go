@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/aniqaqill/runners-list/internal/adapter/http"
 	"github.com/aniqaqill/runners-list/internal/adapter/middleware"
 	"github.com/gofiber/fiber/v2"
@@ -8,6 +10,8 @@ import (
 
 func setupRoutes(app *fiber.App, eventHandler *http.EventHandler, userHandler *http.UserHandler) {
 	// Public routes
+
+	log.Println("setupRoutes is being called")
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("API is working!")
 	})

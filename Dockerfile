@@ -9,18 +9,3 @@ COPY . .
 RUN go mod download
 RUN go mod tidy
 CMD ["air", "-c", ".air.toml"]
-
-# Builder stage (for production and testing)
-# FROM base AS builder
-# COPY . .
-# RUN go mod download
-# RUN go mod tidy
-#not working because
-#RUN go build -o app ./cmd/main.go
-#sebab ada main.go and routes.go
-# RUN go build -o app ./cmd/... 
-# Build all files in the cmd directory
-
-# Production stage
-
-# Testing stage

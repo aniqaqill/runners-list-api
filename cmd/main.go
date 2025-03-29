@@ -9,6 +9,7 @@ import (
 	"github.com/aniqaqill/runners-list/internal/core/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	// Import the routes package
 )
 
 func main() {
@@ -41,6 +42,7 @@ func main() {
 func runFiberServer(eventHandler *http.EventHandler, userHandler *http.UserHandler) error {
 	app := fiber.New()
 
+	// Call setupRoutes from the cmd package
 	setupRoutes(app, eventHandler, userHandler)
 
 	return app.Listen(":8080")
