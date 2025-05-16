@@ -8,15 +8,15 @@ import (
 	"github.com/aniqaqill/runners-list/internal/adapter/repository"
 	"github.com/aniqaqill/runners-list/internal/core/service"
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 	// Import the routes package
 )
 
 func main() {
 	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// if err := godotenv.Load(); err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// }
 
 	// Initialize database
 	database.ConnectDb()
