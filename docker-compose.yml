@@ -1,10 +1,9 @@
 services:
   web:
-    container_name: runners-list-api-dev
+    container_name: runners-list-api
     build:
       context: .
-      dockerfile: Dockerfile.dev
-      target: dev
+      dockerfile: Dockerfile
     env_file:
       - .env
     ports:
@@ -16,7 +15,7 @@ services:
       - db
 
   db:
-    container_name: runners-list-db-dev
+    container_name: runners-list-db
     image: postgres:latest
     environment:
       - POSTGRES_USER=${DB_USER}
@@ -25,7 +24,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-db-dev:/var/lib/postgresql/data
+      - postgres-db:/var/lib/postgresql/data
 
 volumes:
-  postgres-db-dev:
+  postgres-db:

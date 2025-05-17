@@ -1,11 +1,30 @@
-# Base stage
-FROM golang:1.23.1 AS base
-WORKDIR /usr/src/app
+# Stage 1: Build stage
+FROM golang:1.23.1-alpine AS build
 
-# Development stage
-FROM base AS dev
-RUN go install github.com/air-verse/air@latest
-COPY . .
+# Set the working directory
+WORKDIR /app
+
+# Copy and download dependencies
+COPY go.mod go.sum ./
 RUN go mod download
-RUN go mod tidy
-CMD ["air", "-c", ".air.toml"]
+
+# Copy the source code
+COPY . .
+
+# Build the Go application
+RUN CGO_ENABLED=0 GOOS=linux go build -o runners-list-api ./cmd
+
+# Stage 2: Final stage
+FROM alpine:edge
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the binary from the build stage
+COPY --from=build /app/runners-list-api .
+
+# Set the timezone and install CA certificates
+RUN apk --no-cache add ca-certificates tzdata
+
+# Set the entrypoint command
+ENTRYPOINT ["/app/runners-list-api"]
