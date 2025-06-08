@@ -1,4 +1,3 @@
-# Development
 up-dev:
 	@echo "Starting development environment..."
 	docker-compose -f docker-compose.dev.yml up --build
@@ -7,9 +6,14 @@ down-dev:
 	@echo "Stopping development environment..."
 	docker-compose -f docker-compose.dev.yml down
 
-terminal:
-	@echo "Opening terminal..."
-	docker-compose -f docker-compose.dev.yml exec terminal /bin/bash
+
+remove-old-network:
+	@echo "Removing old Docker network..."
+	@if docker network inspect dev-network >/dev/null 2>&1; then \
+		docker network rm dev-network || echo "Network dev-network does not exist."; \
+	else \
+		echo "Network dev-network does not exist."; \
+	fi
 
 generate-mocks:
 	@echo "Generating mock files..."
@@ -40,7 +44,6 @@ help:
 	@echo "Available commands:"
 	@echo "  up-dev      - Start the development environment."
 	@echo "  down-dev    - Stop the development environment."
-	@echo "  terminal    - Open terminal in the development environment."
 	@echo "  generate-mocks - Generate mock files for testing."
 	@echo "  unit-test    - Run unit tests and generate coverage report."
 	@echo "  clean-port   - Clean unwanted port bindings 8080."
