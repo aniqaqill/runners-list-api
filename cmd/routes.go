@@ -1,31 +1,32 @@
 package main
 
 import (
-	"log"
+    "log"
 
-	"github.com/aniqaqill/runners-list/internal/adapter/http"
-	"github.com/aniqaqill/runners-list/internal/adapter/middleware"
-	"github.com/gofiber/fiber/v2"
+    "github.com/aniqaqill/runners-list/internal/adapter/http"
+    "github.com/aniqaqill/runners-list/internal/adapter/middleware"
+    "github.com/gofiber/fiber/v2"
 )
 
 func setupRoutes(app *fiber.App, eventHandler *http.EventHandler, userHandler *http.UserHandler) {
-	// Public routes
+    // Group all routes under /api/v1
+    api := app.Group("/api")
+    v1 := api.Group("/v1")
 
-	log.Println("setupRoutes is being called")
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("API is working!")
-	})
+    log.Println("setupRoutes is being called")
+    v1.Get("/", func(c *fiber.Ctx) error {
+        return c.SendString("API v1 is working!")
+    })
 
-	app.Get("/events", eventHandler.ListEvents)
-	app.Get("/users", userHandler.ListUsers)
+    v1.Get("/events", eventHandler.ListEvents)
+    v1.Get("/users", userHandler.ListUsers)
 
-	// User registration and login routes
-	app.Post("/register", userHandler.Register)
-	app.Post("/login", userHandler.Login)
+    // User registration and login routes
+    v1.Post("/register", userHandler.Register)
+    v1.Post("/login", userHandler.Login)
 
-	// Protected routes (JWT middleware)
-	protected := app.Group("/protected", middleware.JWTProtected())
-
-	protected.Post("/events/create-events", middleware.ValidateCreateEventInput, eventHandler.CreateEvent)
-	protected.Delete("/events/:id", eventHandler.DeleteEvent)
+    // Protected routes (JWT middleware)
+    protected := v1.Group("/protected", middleware.JWTProtected())
+    protected.Post("/events/create-events", middleware.ValidateCreateEventInput, eventHandler.CreateEvent)
+    protected.Delete("/events/:id", eventHandler.DeleteEvent)
 }
