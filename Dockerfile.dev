@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 # Development stage
 FROM base AS dev
-RUN go install github.com/air-verse/air@latest
+RUN go install github.com/air-verse/air@v1.52.3
 COPY . .
 RUN go mod download
 RUN go mod tidy

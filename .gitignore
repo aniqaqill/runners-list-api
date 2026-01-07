@@ -32,3 +32,8 @@ vendor/
 # Ignore generated test files
 coverage.html
 coverage.out
+
+# Ignore technical docs
+technical_docs.md
+project_context.md
+*.sh

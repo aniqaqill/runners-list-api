@@ -12,7 +12,8 @@ services:
       - .:/usr/src/app
     command: air ./cmd/main.go -b 0.0.0.0
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     container_name: runners-list-db
@@ -24,7 +25,12 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-db:/var/lib/postgresql/data
+      - postgres-db:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres-db:
