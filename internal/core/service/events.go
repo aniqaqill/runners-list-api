@@ -48,14 +48,14 @@ func (s *EventService) DeleteEvent(id uint) error {
 	return s.repo.Delete(event)
 }
 
+// UpsertEvent inserts or updates an event (used by scraper sync)
+func (s *EventService) UpsertEvent(event *domain.Events) error {
+	return s.repo.Upsert(event)
+}
+
 // isEventDateInFuture checks if the event date is in the future
-func isEventDateInFuture(date string) bool {
-	const layout = "2006-01-02"
-	eventDate, err := time.Parse(layout, date)
-	if err != nil {
-		return false
-	}
-	return eventDate.After(time.Now())
+func isEventDateInFuture(date time.Time) bool {
+	return date.After(time.Now())
 }
 
 /* The service layer contains the business logic and use cases.

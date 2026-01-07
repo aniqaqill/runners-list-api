@@ -69,6 +69,56 @@ func (h *EventHandler) ListEvents(c *fiber.Ctx) error {
 	})
 }
 
+// SyncEvents handles bulk event synchronization from the scraper
+func (h *EventHandler) SyncEvents(c *fiber.Ctx) error {
+	var syncReq SyncRequest
+	if err := c.BodyParser(&syncReq); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(SyncResponse{
+			Success: false,
+			Error:   "Invalid request format",
+		})
+	}
+
+	if len(syncReq.Events) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(SyncResponse{
+			Success: false,
+			Error:   "No events provided",
+		})
+	}
+
+	inserted := 0
+	updated := 0
+
+	for _, eventInput := range syncReq.Events {
+		event, err := eventInput.ToEvent()
+		if err != nil {
+			// Skip events with invalid date format
+			continue
+		}
+
+		// Try to upsert the event (insert or update based on name + date)
+		err = h.eventService.UpsertEvent(&event)
+		if err != nil {
+			// Log error but continue processing other events
+			continue
+		}
+
+		// Check if it was an insert or update based on ID
+		if event.ID == 0 {
+			inserted++
+		} else {
+			updated++
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(SyncResponse{
+		Success:  true,
+		Inserted: inserted,
+		Updated:  updated,
+		Total:    len(syncReq.Events),
+	})
+}
+
 // DeleteEvent handles the deletion of an event by its ID
 func (h *EventHandler) DeleteEvent(c *fiber.Ctx) error {
 	id := c.Params("id")

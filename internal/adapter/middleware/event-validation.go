@@ -29,10 +29,8 @@ func ValidateCreateEventInput(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validate date range (e.g., not in the past)
-	const layout = "2006-01-02"
-	eventDate, _ := time.Parse(layout, input.Date)
-	if eventDate.Before(time.Now()) {
+	// Validate date range (not in the past)
+	if input.Date.Before(time.Now()) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   true,
 			"message": "Date must be in the future.",

@@ -8,6 +8,7 @@ type EventRepository interface {
 	FindByID(id uint) (*domain.Events, error)
 	Delete(event *domain.Events) error
 	EventNameExists(name string) bool
+	Upsert(event *domain.Events) error
 }
 
 /* The port layer defines the interfaces (ports) that the core layer

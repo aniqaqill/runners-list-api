@@ -34,6 +34,26 @@ func (r *GormEventRepository) Delete(event *domain.Events) error {
 	return r.db.Delete(event).Error
 }
 
+// Upsert inserts a new event or updates existing one based on name + date
+func (r *GormEventRepository) Upsert(event *domain.Events) error {
+	// First, try to find existing event by name and date
+	var existing domain.Events
+	err := r.db.Where("name = ? AND date = ?", event.Name, event.Date).First(&existing).Error
+
+	if err == gorm.ErrRecordNotFound {
+		// Event doesn't exist, create new one
+		return r.db.Create(event).Error
+	} else if err != nil {
+		// Some other error occurred
+		return err
+	}
+
+	// Event exists, update it
+	event.ID = existing.ID
+	event.CreatedAt = existing.CreatedAt
+	return r.db.Save(event).Error
+}
+
 func (r *GormEventRepository) EventNameExists(name string) bool {
 	var event domain.Events
 	err := r.db.Where("name = ?", name).First(&event).Error
