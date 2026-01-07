@@ -22,7 +22,6 @@ Part of the **Runners List Platform** - a microservices-ready architecture for s
 - [Development](#development)
 - [Testing](#testing)
 - [Deployment](#deployment)
-- [Contributing](#contributing)
 
 ---
 
@@ -46,10 +45,8 @@ graph LR
 - **Repository**: [runners-list-scraper](https://github.com/aniqaqill/runners-list-scraper)
 - **Purpose**: Extracts running event data from Malaysian event listing websites
 - **Tech**: Python, Selenium, BeautifulSoup4
-- **Status**: [x] Production-ready (123 events, 100% valid, 48 tests passing)
 - **Features**:
   - Scrapes event name, date, location, state, distance
-  - Comprehensive validation (69.9% state, 36.6% distance extraction)
   - Automated retry logic with exponential backoff
   - Sends data to API via secure internal endpoint
 
@@ -57,7 +54,6 @@ graph LR
 - **Repository**: [runners-list-api](https://github.com/aniqaqill/runners-list-api)
 - **Purpose**: Central data hub with RESTful API for event management
 - **Tech**: Go, Fiber v2, GORM, PostgreSQL
-- **Status**: [x] V1 Complete
 - **Features**:
   - Internal sync endpoint for scraper data ingestion
   - JWT authentication for protected routes
@@ -69,7 +65,6 @@ graph LR
 - **Repository**: [runners-list-web](https://github.com/aniqaqill/runners-list-web)
 - **Purpose**: User-facing web application for browsing events
 - **Tech**: Next.js 15, React 18, TypeScript, Tailwind CSS, Shadcn UI
-- **Status**: [ ] In Progress (currently using static JSON)
 - **Planned Features**:
   - Real-time event data from API
   - Search and filter by state, distance, date
@@ -312,21 +307,9 @@ INTERNAL_API_KEY=strong_random_api_key
 
 ## Documentation
 
-- **Project Context**: [`project_context.md`](./project_context.md) - Detailed project overview
-- **Technical Docs**: [`technical_docs.md`](./technical_docs.md) - Architecture and design decisions
 - **API Specification**: See [API Endpoints](#api-endpoints) section
 
 ---
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ### Development Guidelines
 - Follow Go best practices and conventions
