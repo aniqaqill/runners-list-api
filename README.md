@@ -223,31 +223,9 @@ curl -X POST http://localhost:8080/api/v1/internal/sync \
 
 ## Development
 
-### Available Make Commands
+If you are lazy for every command run : 
 
 ```bash
-# Development
-make dev-up          # Start development environment
-make dev-down        # Stop development environment
-make dev-clean       # Clean database (remove volumes)
-make dev-logs        # Show development logs
-
-# Building
-make build           # Build the application
-make run             # Run locally (without Docker)
-
-# Testing
-make test            # Run all tests
-make unit-test       # Run unit tests with coverage
-make coverage        # Generate HTML coverage report
-make generate-mocks  # Generate mock files
-
-# Utilities
-make clean           # Clean build artifacts
-make clean-port      # Kill process on port 8080
-make fmt             # Format Go code
-make lint            # Run linter
-make mod             # Tidy dependencies
 make help            # Show all commands
 ```
 
@@ -293,18 +271,6 @@ docker compose -f docker-compose.dev.yml up --build
 docker compose up --build -d
 ```
 
-### Environment Variables for Production
-
-```env
-DB_HOST=your_postgres_host
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_NAME=your_db_name
-JWT_SECRET=strong_random_secret
-INTERNAL_API_KEY=strong_random_api_key
-```
----
-
 ## Documentation
 
 - **API Specification**: See [API Endpoints](#api-endpoints) section
@@ -312,32 +278,10 @@ INTERNAL_API_KEY=strong_random_api_key
 ---
 
 ### Development Guidelines
-- Follow Go best practices and conventions
 - Write tests for new features
 - Update documentation as needed
 - Run `make fmt` before committing
 - Ensure all tests pass (`make test`)
 
----
-
-## License
-
-This project is part of the Runners List Platform ecosystem.
-
----
-
-## Acknowledgments
-
-- **Data Source**: [PM1 Running Events Blog](https://pm1.blogspot.com/p/running-event-2026.html)
-- **Framework**: [Fiber](https://gofiber.io/) - Express-inspired web framework for Go
-- **ORM**: [GORM](https://gorm.io/) - The fantastic ORM library for Go
-
----
-
-## Contact
-
-For questions or support, please open an issue on GitHub.
-
----
 
 **Part of the Runners List Platform** | [Scraper](https://github.com/aniqaqill/runners-list-scraper) | [API](https://github.com/aniqaqill/runners-list-api) | [Frontend](https://github.com/aniqaqill/runners-list-web)
