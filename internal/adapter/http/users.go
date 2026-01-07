@@ -30,13 +30,13 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 		})
 	}
 
-    // Check for empty username or password
-    if user.Username == "" || user.Password == "" {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "error":   true,
-            "message": "Username and password cannot be empty",
-        })
-    }
+	// Check for empty username or password
+	if user.Username == "" || user.Password == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   true,
+			"message": "Username and password cannot be empty",
+		})
+	}
 
 	// Call the UserService to register the user
 	if err := h.userService.Register(user.Username, user.Password); err != nil {
@@ -114,11 +114,11 @@ func (h *UserHandler) ListUsers(c *fiber.Ctx) error {
 	}
 
 	if len(users) == 0 {
-        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-            "error":   true,
-            "message": "No users found in the current database",
-        })
-    }
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error":   true,
+			"message": "No users found in the current database",
+		})
+	}
 
 	return c.JSON(fiber.Map{
 		"error": false,

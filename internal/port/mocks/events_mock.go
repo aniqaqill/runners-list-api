@@ -62,20 +62,6 @@ func (mr *MockEventRepositoryMockRecorder) Delete(event interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockEventRepository)(nil).Delete), event)
 }
 
-// Upsert mocks base method.
-func (m *MockEventRepository) Upsert(event *domain.Events) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upsert", event)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Upsert indicates an expected call of Upsert.
-func (mr *MockEventRepositoryMockRecorder) Upsert(event interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockEventRepository)(nil).Upsert), event)
-}
-
 // EventNameExists mocks base method.
 func (m *MockEventRepository) EventNameExists(name string) bool {
 	m.ctrl.T.Helper()
@@ -118,4 +104,18 @@ func (m *MockEventRepository) FindByID(id uint) (*domain.Events, error) {
 func (mr *MockEventRepositoryMockRecorder) FindByID(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockEventRepository)(nil).FindByID), id)
+}
+
+// Upsert mocks base method.
+func (m *MockEventRepository) Upsert(event *domain.Events) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Upsert", event)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Upsert indicates an expected call of Upsert.
+func (mr *MockEventRepositoryMockRecorder) Upsert(event interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockEventRepository)(nil).Upsert), event)
 }

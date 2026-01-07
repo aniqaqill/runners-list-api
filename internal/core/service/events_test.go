@@ -38,7 +38,7 @@ var _ = Describe("EventService", func() {
 		It("should return an error if the event date is in the past", func() {
 			pastEvent := &domain.Events{
 				Name: "Past Event",
-				Date: "2020-01-01", // Past date
+				Date: time.Now().AddDate(-1, 0, 0), // Past date
 			}
 
 			err := eventService.CreateEvent(pastEvent)
@@ -48,7 +48,7 @@ var _ = Describe("EventService", func() {
 		It("should return an error if the event name is not unique", func() {
 			futureEvent := &domain.Events{
 				Name: "Future Event",
-				Date: "2030-01-01", // Future date
+				Date: time.Now().AddDate(1, 0, 0), // Future date
 			}
 
 			// Mock the EventNameExists method to return true (name exists)
@@ -63,7 +63,7 @@ var _ = Describe("EventService", func() {
 		It("should create the event if the date is in the future and the name is unique", func() {
 			futureEvent := &domain.Events{
 				Name: "Future Event",
-				Date: "2030-01-01", // Future date
+				Date: time.Now().AddDate(1, 0, 0), // Future date
 			}
 
 			// Mock the EventNameExists method to return false (name is unique)
@@ -84,8 +84,8 @@ var _ = Describe("EventService", func() {
 	Describe("ListEvents", func() {
 		It("should return a list of events", func() {
 			events := []domain.Events{
-				{Name: "Event 1", Date: "2030-01-01"},
-				{Name: "Event 2", Date: "2030-02-01"},
+				{Name: "Event 1", Date: time.Now().AddDate(1, 0, 0)},
+				{Name: "Event 2", Date: time.Now().AddDate(1, 1, 0)},
 			}
 
 			// Mock the FindAll method to return the events
@@ -112,7 +112,7 @@ var _ = Describe("EventService", func() {
 	Describe("DeleteEvent", func() {
 		It("should delete the event if it exists", func() {
 			eventID := uint(1)
-			event := &domain.Events{Name: "Event 1", Date: "2030-01-01"}
+			event := &domain.Events{Name: "Event 1", Date: time.Now().AddDate(1, 0, 0)}
 
 			// Mock the FindByID method to return the event
 			mockRepo.EXPECT().
@@ -143,18 +143,13 @@ var _ = Describe("EventService", func() {
 
 	Describe("isEventDateInFuture", func() {
 		It("should return true if the event date is in the future", func() {
-			futureDate := time.Now().AddDate(1, 0, 0).Format("2006-01-02")
+			futureDate := time.Now().AddDate(1, 0, 0)
 			Expect(isEventDateInFuture(futureDate)).To(BeTrue())
 		})
 
 		It("should return false if the event date is in the past", func() {
-			pastDate := time.Now().AddDate(-1, 0, 0).Format("2006-01-02")
+			pastDate := time.Now().AddDate(-1, 0, 0)
 			Expect(isEventDateInFuture(pastDate)).To(BeFalse())
-		})
-
-		It("should return false if the event date is invalid", func() {
-			invalidDate := "invalid-date"
-			Expect(isEventDateInFuture(invalidDate)).To(BeFalse())
 		})
 	})
 })
