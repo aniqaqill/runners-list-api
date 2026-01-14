@@ -119,3 +119,19 @@ func (mr *MockEventRepositoryMockRecorder) Upsert(event interface{}) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockEventRepository)(nil).Upsert), event)
 }
+
+// BulkUpsert mocks base method.
+func (m *MockEventRepository) BulkUpsert(events []domain.Events) (int, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BulkUpsert", events)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// BulkUpsert indicates an expected call of BulkUpsert.
+func (mr *MockEventRepositoryMockRecorder) BulkUpsert(events interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkUpsert", reflect.TypeOf((*MockEventRepository)(nil).BulkUpsert), events)
+}

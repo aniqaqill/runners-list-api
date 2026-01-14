@@ -9,6 +9,7 @@ type EventRepository interface {
 	Delete(event *domain.Events) error
 	EventNameExists(name string) bool
 	Upsert(event *domain.Events) error
+	BulkUpsert(events []domain.Events) (inserted int, updated int, err error)
 }
 
 /* The port layer defines the interfaces (ports) that the core layer

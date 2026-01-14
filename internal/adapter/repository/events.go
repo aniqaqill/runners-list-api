@@ -60,5 +60,40 @@ func (r *GormEventRepository) EventNameExists(name string) bool {
 	return err == nil
 }
 
+// BulkUpsert inserts or updates multiple events in a single transaction
+func (r *GormEventRepository) BulkUpsert(events []domain.Events) (inserted int, updated int, err error) {
+	err = r.db.Transaction(func(tx *gorm.DB) error {
+		for i := range events {
+			event := &events[i]
+
+			// Try to find existing event by name and date
+			var existing domain.Events
+			findErr := tx.Where("name = ? AND date = ?", event.Name, event.Date).First(&existing).Error
+
+			if findErr == gorm.ErrRecordNotFound {
+				// Event doesn't exist, create new one
+				if createErr := tx.Create(event).Error; createErr != nil {
+					return createErr
+				}
+				inserted++
+			} else if findErr != nil {
+				// Some other error occurred
+				return findErr
+			} else {
+				// Event exists, update it
+				event.ID = existing.ID
+				event.CreatedAt = existing.CreatedAt
+				if saveErr := tx.Save(event).Error; saveErr != nil {
+					return saveErr
+				}
+				updated++
+			}
+		}
+		return nil
+	})
+
+	return inserted, updated, err
+}
+
 /* The repository layer implements the interfaces (ports) defined in the port layer.
 It interacts with external systems (e.g., databases) and provides data to the service layer. */

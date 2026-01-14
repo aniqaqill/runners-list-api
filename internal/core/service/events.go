@@ -48,9 +48,14 @@ func (s *EventService) DeleteEvent(id uint) error {
 	return s.repo.Delete(event)
 }
 
-// UpsertEvent inserts or updates an event (used by scraper sync)
+// UpsertEvent inserts or updates an event
 func (s *EventService) UpsertEvent(event *domain.Events) error {
 	return s.repo.Upsert(event)
+}
+
+// BulkUpsertEvents inserts or updates multiple events in a single transaction
+func (s *EventService) BulkUpsertEvents(events []domain.Events) (inserted int, updated int, err error) {
+	return s.repo.BulkUpsert(events)
 }
 
 // isEventDateInFuture checks if the event date is in the future

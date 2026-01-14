@@ -86,29 +86,24 @@ func (h *EventHandler) SyncEvents(c *fiber.Ctx) error {
 		})
 	}
 
-	inserted := 0
-	updated := 0
-
+	// Convert EventInput to domain.Events
+	var events []domain.Events
 	for _, eventInput := range syncReq.Events {
 		event, err := eventInput.ToEvent()
 		if err != nil {
 			// Skip events with invalid date format
 			continue
 		}
+		events = append(events, event)
+	}
 
-		// Try to upsert the event (insert or update based on name + date)
-		err = h.eventService.UpsertEvent(&event)
-		if err != nil {
-			// Log error but continue processing other events
-			continue
-		}
-
-		// Check if it was an insert or update based on ID
-		if event.ID == 0 {
-			inserted++
-		} else {
-			updated++
-		}
+	// Use bulk upsert for better performance
+	inserted, updated, err := h.eventService.BulkUpsertEvents(events)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(SyncResponse{
+			Success: false,
+			Error:   "Failed to sync events: " + err.Error(),
+		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(SyncResponse{
