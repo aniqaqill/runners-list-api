@@ -60,7 +60,7 @@ jobs:
           image: ${{ steps.build-image.outputs.image }}
           environment-variables: |
             DB_HOST=${{ secrets.SUPABASE_DB_HOST }}
-            DB_USER=postgres
+            DB_USER=${{ secrets.SUPABASE_DB_USER }}
             DB_PASSWORD=${{ secrets.SUPABASE_DB_PASSWORD }}
             DB_NAME=postgres
             DB_PORT=5432
