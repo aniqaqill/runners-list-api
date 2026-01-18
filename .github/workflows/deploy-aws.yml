@@ -104,7 +104,42 @@ jobs:
           NEW_URL="http://$PUBLIC_IP:8080/api/v1/internal/sync"
           
           # 4. Update the Secret in the Scraper Repo
-          # Replace 'aniqaqill/runners-list-scraper' with your actual scraper repo name if different
           gh secret set API_URL --body "$NEW_URL" --repo aniqaqill/runners-list-scraper
+          echo "✅ Updated Scraper Secret"
+
+          # 5. Update Vercel Environment Variable (for Frontend)
+          # We use the Vercel API to upsert the NEXT_PUBLIC_API_URL
           
-          echo "✅ Successfully updated API_URL in scraper repo to: $NEW_URL"
+          echo "Updating Vercel Env Var..."
+          
+          # Remove /events for the base URL, or keep it if frontend expects it (Frontend loadEvents appends /events, so we need base)
+          # loadEvents: `${apiUrl}/events` -> So we need http://IP:8080/api/v1
+          
+          VERCEL_VAL="$NEW_URL"
+          # NEW_URL currently includes /internal/sync ? No, let's check previous steps.
+          # NEW_URL="http://$PUBLIC_IP:8080/api/v1/internal/sync" in previous code.
+          # We need "http://$PUBLIC_IP:8080/api/v1" for the frontend.
+          
+          FRONTEND_URL="http://$PUBLIC_IP:8080/api/v1"
+          
+          # Get the ID of the existing env var (if any)
+          ENV_ID=$(curl -s -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            "https://api.vercel.com/v9/projects/${{ secrets.VERCEL_PROJECT_ID }}/env?teamId=${{ secrets.VERCEL_ORG_ID }}" \
+            | jq -r '.envs[] | select(.key=="NEXT_PUBLIC_API_URL") | .id' | head -n 1)
+            
+          if [ -n "$ENV_ID" ] && [ "$ENV_ID" != "null" ]; then
+            echo "Environment variable exists (ID: $ENV_ID). Updating..."
+            curl -s -X PATCH -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"value\": \"$FRONTEND_URL\"}" \
+              "https://api.vercel.com/v9/projects/${{ secrets.VERCEL_PROJECT_ID }}/env/$ENV_ID?teamId=${{ secrets.VERCEL_ORG_ID }}"
+          else
+            echo "Environment variable not found. Creating..."
+            curl -s -X POST -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\": \"NEXT_PUBLIC_API_URL\", \"value\": \"$FRONTEND_URL\", \"type\": \"plain\", \"target\": [\"production\", \"preview\", \"development\"]}" \
+              "https://api.vercel.com/v9/projects/${{ secrets.VERCEL_PROJECT_ID }}/env?teamId=${{ secrets.VERCEL_ORG_ID }}"
+          fi
+          
+          echo "✅ Updated Vercel Environment Variable to: $FRONTEND_URL"
+          echo "⚠️ NOTE: You must REDEPLOY your Vercel project for this change to take effect!"
