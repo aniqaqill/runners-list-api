@@ -14,8 +14,11 @@ import (
 
 func main() {
 	// Load environment variables
+	// Load environment variables (optional for prod, required for dev)
 	if err := godotenv.Load(); err != nil {
-		log.Println("Warning: .env file not found, using environment variables")
+		log.Println("Info: .env file not found, using system environment variables")
+	} else {
+		log.Println("Info: Loaded environment variables from .env")
 	}
 
 	// Initialize database
