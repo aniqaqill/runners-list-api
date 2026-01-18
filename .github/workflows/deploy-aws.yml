@@ -79,3 +79,32 @@ jobs:
         run: |
           echo "✅ Deployed successfully!"
           echo "Image: ${{ steps.build-image.outputs.image }}"
+
+      - name: Update Scraper API_URL Secret
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "Fetching new Public IP..."
+          
+          # 1. Get the Task ARN of the running task
+          TASK_ARN=$(aws ecs list-tasks --cluster ${{ env.ECS_CLUSTER }} --service-name ${{ env.ECS_SERVICE }} --desired-status RUNNING --query "taskArns[0]" --output text)
+          
+          # 2. Get the Network Interface ID (ENI)
+          ENI_ID=$(aws ecs describe-tasks --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN --query "tasks[0].attachments[0].details[?name=='networkInterfaceId'].value" --output text)
+          
+          # 3. Get the Public IP
+          PUBLIC_IP=$(aws ec2 describe-network-interfaces --network-interface-ids $ENI_ID --query "NetworkInterfaces[0].Association.PublicIp" --output text)
+          
+          if [ -z "$PUBLIC_IP" ]; then
+            echo "::error::Could not retrieve Public IP"
+            exit 1
+          fi
+          
+          echo "New Public IP: $PUBLIC_IP"
+          NEW_URL="http://$PUBLIC_IP:8080/api/v1/internal/sync"
+          
+          # 4. Update the Secret in the Scraper Repo
+          # Replace 'aniqaqill/runners-list-scraper' with your actual scraper repo name if different
+          gh secret set API_URL --body "$NEW_URL" --repo aniqaqill/runners-list-scraper
+          
+          echo "✅ Successfully updated API_URL in scraper repo to: $NEW_URL"
