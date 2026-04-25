@@ -1,0 +1,381 @@
+openapi: "3.1.0"
+
+info:
+  title: Runners List API
+  description: |
+    Running events aggregation API for Malaysia.
+    Scraper POSTs to /internal/sync; the Next.js frontend GETs /events.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.runnerslist.my/api/v1
+    description: Production (Cloud Run)
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+components:
+  schemas:
+    Event:
+      type: object
+      required: [id, name, location, date, registration_url]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Kuala Lumpur Marathon 2026"
+        location:
+          type: string
+          example: "Dataran Merdeka, Kuala Lumpur"
+        state:
+          type: string
+          example: "Selangor"
+        distance:
+          type: string
+          example: "42km, 21km, 10km"
+        date:
+          type: string
+          format: date
+          example: "2026-06-15"
+        description:
+          type: string
+          example: "Annual KL Marathon"
+        registration_url:
+          type: string
+          format: uri
+          example: "https://example.com/register"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SyncEventInput:
+      type: object
+      required: [name, location, date, registration_url]
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        state:
+          type: string
+        distance:
+          type: string
+        date:
+          type: string
+          format: date
+          example: "2026-06-15"
+        description:
+          type: string
+        registration_url:
+          type: string
+          format: uri
+
+    SyncRequest:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/SyncEventInput"
+
+    SyncResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        inserted:
+          type: integer
+        updated:
+          type: integer
+        total:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              reason:
+                type: string
+        error:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, ready, unavailable]
+
+    ListEventsResponse:
+      type: object
+      properties:
+        error:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+
+    UserCredentials:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      properties:
+        error:
+          type: boolean
+        message:
+          type: string
+        token:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    InternalToken:
+      type: apiKey
+      in: header
+      name: X-Internal-Token
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+paths:
+  /health:
+    get:
+      summary: Liveness probe
+      description: Always returns 200 if the process is alive. Used by Cloud Run / ECS.
+      operationId: healthCheck
+      tags: [Observability]
+      responses:
+        "200":
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /ready:
+    get:
+      summary: Readiness probe
+      description: Returns 200 if the DB is reachable. Used by Cloud Run / ECS.
+      operationId: readyCheck
+      tags: [Observability]
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: DB unreachable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/events:
+    get:
+      summary: List all running events
+      description: |
+        Returns upcoming running events. Supports optional query filters.
+        Used by the Next.js frontend.
+      operationId: listEvents
+      tags: [Events]
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: string
+          example: "Selangor"
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+          example: "2026-01-01"
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+          example: "2026-12-31"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Event list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEventsResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/internal/sync:
+    post:
+      summary: Bulk sync events from scraper
+      description: |
+        Upserts a batch of events. Called by the Python scraper daily.
+        Requires the X-Internal-Token header.
+      operationId: syncEvents
+      tags: [Internal]
+      security:
+        - InternalToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncRequest"
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/register:
+    post:
+      summary: Register a new user
+      operationId: register
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCredentials"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Username already exists
+
+  /api/v1/login:
+    post:
+      summary: Log in and receive a JWT
+      operationId: login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCredentials"
+      responses:
+        "200":
+          description: JWT token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+
+  /api/v1/protected/events/create-events:
+    post:
+      summary: Create a single event (admin)
+      operationId: createEvent
+      tags: [Events]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncEventInput"
+      responses:
+        "201":
+          description: Event created
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+
+  /api/v1/protected/events/{id}:
+    delete:
+      summary: Delete an event (admin)
+      operationId: deleteEvent
+      tags: [Events]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Event deleted
+        "400":
+          description: Invalid ID
+        "401":
+          description: Unauthorized

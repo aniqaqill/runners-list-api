@@ -1,0 +1,91 @@
+name: Deploy API to Cloud Run
+
+# Replaces deploy-aws.yml. Key improvements:
+#   - No IP sync: Cloud Run URL is stable — no need to update Vercel or scraper
+#   - No long-lived AWS keys: GCP auth via Workload Identity Federation (OIDC)
+#   - Native HTTPS: Cloud Run issues a managed cert on *.run.app automatically
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  GCP_REGION: asia-southeast1
+  SERVICE_NAME: runners-list-api
+
+jobs:
+  deploy:
+    name: Build and Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Required for Workload Identity Federation
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Auth ────────────────────────────────────────────────────────────────
+      # Exchange GitHub OIDC token for short-lived GCP credentials.
+      # No AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY in your secrets list.
+      - name: Authenticate to GCP
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # ── Build ───────────────────────────────────────────────────────────────
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push Docker image
+        env:
+          IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/runners-list-api/runners-list-api:${{ github.sha }}
+        run: |
+          docker build -t $IMAGE .
+          docker tag $IMAGE ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/runners-list-api/runners-list-api:latest
+          docker push $IMAGE
+          docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/runners-list-api/runners-list-api:latest
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      # ── Deploy ──────────────────────────────────────────────────────────────
+      # gcloud run deploy updates only the container image.
+      # Secrets, scaling, and probes are managed by Terraform (5_cloud_run.tf).
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.IMAGE }} \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --quiet
+
+      - name: Show deployed URL
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --format 'value(status.url)')
+          echo "Deployed to: $URL"
+          echo "API base: $URL/api/v1"
+          echo ""
+          echo "Note: URL is stable — no need to update Vercel or scraper secrets."
+
+      # ── Smoke test ──────────────────────────────────────────────────────────
+      - name: Health check
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --format 'value(status.url)')
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+          echo "Health check passed (HTTP $STATUS)"

@@ -8,6 +8,7 @@ import (
 	"github.com/aniqaqill/runners-list/internal/port"
 )
 
+
 var (
 	ErrEventDateInPast    = errors.New("event date must be in the future")
 	ErrEventNameNotUnique = errors.New("event name must be unique")
@@ -36,8 +37,8 @@ func (s *EventService) CreateEvent(event *domain.Events) error {
 	return s.repo.Create(event)
 }
 
-func (s *EventService) ListEvents() ([]domain.Events, error) {
-	return s.repo.FindAll()
+func (s *EventService) ListEvents(filter port.EventFilter) ([]domain.Events, error) {
+	return s.repo.FindAll(filter)
 }
 
 func (s *EventService) DeleteEvent(id uint) error {

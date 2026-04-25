@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http/httptest"
-	"os"
 	"time"
 
 	"github.com/aniqaqill/runners-list/internal/core/domain"
@@ -56,7 +55,7 @@ var _ = Describe("Middleware", func() {
 			err = json.NewDecoder(resp.Body).Decode(&response)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(response["error"]).To(BeTrue())
-			Expect(response["message"]).To(Equal("Validation failed"))
+			Expect(response["message"]).To(Equal("validation failed"))
 			// Expect(response["details"]).To(ContainSubstring("Password is a required field"))
 		})
 
@@ -130,8 +129,10 @@ var _ = Describe("Middleware", func() {
 	})
 
 	Describe("JWTProtected", func() {
+		const testSecret = "supersecretkey"
+
 		It("should return 401 for missing Authorization header", func() {
-			app.Get("/protected", JWTProtected(), func(c *fiber.Ctx) error {
+			app.Get("/protected", JWTProtected(testSecret), func(c *fiber.Ctx) error {
 				return c.SendStatus(fiber.StatusOK)
 			})
 
@@ -142,7 +143,7 @@ var _ = Describe("Middleware", func() {
 		})
 
 		It("should return 401 for invalid token", func() {
-			app.Get("/protected", JWTProtected(), func(c *fiber.Ctx) error {
+			app.Get("/protected", JWTProtected(testSecret), func(c *fiber.Ctx) error {
 				return c.SendStatus(fiber.StatusOK)
 			})
 
@@ -154,15 +155,14 @@ var _ = Describe("Middleware", func() {
 		})
 
 		It("should return 401 for expired token", func() {
-			os.Setenv("JWT_SECRET", "supersecretkey")
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 				"sub": "1234567890",
-				"exp": time.Now().Add(-time.Hour).Unix(), // Expired token
+				"exp": time.Now().Add(-time.Hour).Unix(),
 			})
-			tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+			tokenString, err := token.SignedString([]byte(testSecret))
 			Expect(err).NotTo(HaveOccurred())
 
-			app.Get("/protected", JWTProtected(), func(c *fiber.Ctx) error {
+			app.Get("/protected", JWTProtected(testSecret), func(c *fiber.Ctx) error {
 				return c.SendStatus(fiber.StatusOK)
 			})
 
@@ -174,15 +174,14 @@ var _ = Describe("Middleware", func() {
 		})
 
 		It("should allow access with a valid token", func() {
-			os.Setenv("JWT_SECRET", "supersecretkey")
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 				"sub": "1234567890",
-				"exp": time.Now().Add(time.Hour * 1).Unix(),
+				"exp": time.Now().Add(time.Hour).Unix(),
 			})
-			tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+			tokenString, err := token.SignedString([]byte(testSecret))
 			Expect(err).NotTo(HaveOccurred())
 
-			app.Get("/protected", JWTProtected(), func(c *fiber.Ctx) error {
+			app.Get("/protected", JWTProtected(testSecret), func(c *fiber.Ctx) error {
 				return c.SendStatus(fiber.StatusOK)
 			})
 
@@ -192,6 +191,5 @@ var _ = Describe("Middleware", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(fiber.StatusOK))
 		})
-
 	})
 })

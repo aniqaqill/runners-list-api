@@ -16,32 +16,30 @@ var (
 )
 
 type UserService struct {
-	repo port.UserRepository
+	repo      port.UserRepository
+	jwtSecret string
 }
 
-func NewUserService(repo port.UserRepository) *UserService {
-	return &UserService{repo: repo}
+// NewUserService creates a UserService. jwtSecret is injected here so that
+// CreateToken does not read os.Getenv on each call.
+func NewUserService(repo port.UserRepository, jwtSecret string) *UserService {
+	return &UserService{repo: repo, jwtSecret: jwtSecret}
 }
 
 func (s *UserService) Register(username, password string) error {
-	// Check if the username already exists
 	existingUser, err := s.repo.FindByUsername(username)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		// Return an error if the query fails (other than "record not found")
 		return fmt.Errorf("failed to check username: %w", err)
 	}
 	if existingUser != nil {
-		// Return a conflict error if the username already exists
 		return ErrUsernameAlreadyExists
 	}
 
-	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	// Create the new user
 	newUser := &domain.Users{
 		Username: username,
 		Password: string(hashedPassword),
@@ -63,15 +61,13 @@ func (s *UserService) Login(username, password string) (*domain.Users, error) {
 		return nil, ErrInvalidCredentials
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
 	return user, nil
 }
 
-// list all user
 func (s *UserService) ListUsers() ([]domain.Users, error) {
 	return s.repo.FindAll()
 }

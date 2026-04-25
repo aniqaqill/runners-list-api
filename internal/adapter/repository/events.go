@@ -6,6 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const defaultLimit = 50
+
 type GormEventRepository struct {
 	db *gorm.DB
 }
@@ -18,9 +20,27 @@ func (r *GormEventRepository) Create(event *domain.Events) error {
 	return r.db.Create(event).Error
 }
 
-func (r *GormEventRepository) FindAll() ([]domain.Events, error) {
+func (r *GormEventRepository) FindAll(filter port.EventFilter) ([]domain.Events, error) {
 	var events []domain.Events
-	err := r.db.Find(&events).Error
+
+	q := r.db.Model(&domain.Events{})
+
+	if filter.State != "" {
+		q = q.Where("LOWER(state) = LOWER(?)", filter.State)
+	}
+	if !filter.From.IsZero() {
+		q = q.Where("date >= ?", filter.From)
+	}
+	if !filter.To.IsZero() {
+		q = q.Where("date <= ?", filter.To)
+	}
+
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = defaultLimit
+	}
+
+	err := q.Order("date ASC").Limit(limit).Offset(filter.Offset).Find(&events).Error
 	return events, err
 }
 

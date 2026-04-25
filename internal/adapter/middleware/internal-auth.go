@@ -1,36 +1,46 @@
 package middleware
 
 import (
-	"os"
+	"crypto/subtle"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// InternalAPIKeyAuth validates the internal API key for scraper access
-func InternalAPIKeyAuth(c *fiber.Ctx) error {
-	apiKey := c.Get("X-Internal-Token")
-	expectedKey := os.Getenv("INTERNAL_API_KEY")
+// InternalAPIKeyAuth returns a Fiber middleware that validates the
+// X-Internal-Token header against the expected key.
+//
+// The expected key is injected at construction time (from Config) instead of
+// being read from os.Getenv on every request. This makes the middleware
+// trivially testable and removes a hidden global dependency.
+//
+// subtle.ConstantTimeCompare is used to prevent timing-based side-channel
+// attacks: the comparison always takes the same amount of time regardless of
+// where the strings differ.
+func InternalAPIKeyAuth(expectedKey string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if expectedKey == "" {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"error":   "internal API key not configured on server",
+			})
+		}
 
-	if expectedKey == "" {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "Internal API key not configured",
-		})
+		apiKey := c.Get("X-Internal-Token")
+		if apiKey == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"success": false,
+				"error":   "missing X-Internal-Token header",
+			})
+		}
+
+		// constant-time byte comparison — same duration whether keys match or not
+		if subtle.ConstantTimeCompare([]byte(apiKey), []byte(expectedKey)) != 1 {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"success": false,
+				"error":   "invalid API key",
+			})
+		}
+
+		return c.Next()
 	}
-
-	if apiKey == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success": false,
-			"error":   "Missing X-Internal-Token header",
-		})
-	}
-
-	if apiKey != expectedKey {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success": false,
-			"error":   "Invalid API key",
-		})
-	}
-
-	return c.Next()
 }

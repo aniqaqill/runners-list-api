@@ -26,7 +26,7 @@ var _ = Describe("UserService", func() {
 		mockRepo = mocks.NewMockUserRepository(ctrl)
 
 		// Initialize UserService with the mock repository
-		userService = NewUserService(mockRepo)
+		userService = NewUserService(mockRepo, "test-jwt-secret")
 	})
 
 	AfterEach(func() {

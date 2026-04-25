@@ -1,52 +1,96 @@
 package main
 
 import (
-	"log"
+	"context"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/aniqaqill/runners-list/internal/adapter/database"
-	"github.com/aniqaqill/runners-list/internal/adapter/http"
+	adapthttp "github.com/aniqaqill/runners-list/internal/adapter/http"
+	"github.com/aniqaqill/runners-list/internal/adapter/middleware"
 	"github.com/aniqaqill/runners-list/internal/adapter/repository"
+	"github.com/aniqaqill/runners-list/internal/config"
 	"github.com/aniqaqill/runners-list/internal/core/service"
+	"github.com/aniqaqill/runners-list/internal/platform/logging"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-	// Import the routes package
 )
 
 func main() {
-	// Load environment variables
-	// Load environment variables (optional for prod, required for dev)
+	// Structured JSON logging via stdlib slog — Cloud Logging parses this for free
+	logging.Init()
+
+	// .env is optional: present in dev, absent in production (env vars injected by Cloud Run / ECS)
 	if err := godotenv.Load(); err != nil {
-		log.Println("Info: .env file not found, using system environment variables")
-	} else {
-		log.Println("Info: Loaded environment variables from .env")
+		slog.Info("no .env file found, using system environment variables")
 	}
 
-	// Initialize database
-	database.ConnectDb()
+	// Load and validate all required configuration once at startup
+	cfg, err := config.Load()
+	if err != nil {
+		slog.Error("invalid configuration", "error", err)
+		os.Exit(1)
+	}
 
-	// Initialize repositories
-	eventRepo := repository.NewGormEventRepository(database.DB.Db)
-	userRepo := repository.NewGormUserRepository(database.DB.Db)
+	// Open database connection (sslmode=require, no global variable)
+	db, err := database.Connect(cfg)
+	if err != nil {
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
+	}
 
-	// Initialize services
+	// Build dependency graph: repo → service → handler
+	eventRepo := repository.NewGormEventRepository(db)
+	userRepo := repository.NewGormUserRepository(db)
+
 	eventService := service.NewEventService(eventRepo)
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, cfg.JWTSecret)
 
-	// Initialize handlers
-	eventHandler := http.NewEventHandler(eventService)
-	userHandler := http.NewUserHandler(userService)
+	eventHandler := adapthttp.NewEventHandler(eventService)
+	userHandler := adapthttp.NewUserHandler(userService)
 
-	// Initialize and start Fiber app
-	if err := runFiberServer(eventHandler, userHandler); err != nil {
-		log.Fatal(err)
+	app := fiber.New(fiber.Config{
+		EnablePrintRoutes: false,
+	})
+
+	// Global middleware: request ID propagation + structured access logging
+	app.Use(middleware.RequestID())
+	app.Use(middleware.RequestLogger())
+
+	setupRoutes(app, db, cfg, eventHandler, userHandler)
+
+	// Graceful shutdown: wait for SIGTERM (sent by Cloud Run / ECS on stop)
+	// or SIGINT (Ctrl+C in dev) before closing.
+	//
+	//   signal.NotifyContext creates a context that is cancelled when the OS
+	//   delivers the named signal. The defer stop() deregisters the handler.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
+	// Start server in a goroutine so the main goroutine can block on the signal.
+	go func() {
+		addr := ":" + cfg.Port
+		slog.Info("server starting", "addr", addr)
+		if err := app.Listen(addr); err != nil {
+			slog.Error("server error", "error", err)
+		}
+	}()
+
+	// Block until the signal fires
+	<-ctx.Done()
+	slog.Info("shutdown signal received, draining connections")
+
+	// Give in-flight requests up to 10 seconds to finish before forceful close
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := app.ShutdownWithContext(shutdownCtx); err != nil {
+		slog.Error("error during shutdown", "error", err)
+		os.Exit(1)
 	}
-}
 
-func runFiberServer(eventHandler *http.EventHandler, userHandler *http.UserHandler) error {
-	app := fiber.New()
-
-	// Call setupRoutes from the cmd package
-	setupRoutes(app, eventHandler, userHandler)
-
-	return app.Listen(":8080")
+	slog.Info("server stopped cleanly")
 }

@@ -24,11 +24,18 @@ type SyncEventInput struct {
 
 // SyncResponse represents the response from the sync endpoint
 type SyncResponse struct {
-	Success  bool   `json:"success"`
-	Inserted int    `json:"inserted"`
-	Updated  int    `json:"updated"`
-	Total    int    `json:"total"`
-	Error    string `json:"error,omitempty"`
+	Success   bool           `json:"success"`
+	Inserted  int            `json:"inserted"`
+	Updated   int            `json:"updated"`
+	Total     int            `json:"total"`
+	RowErrors []SyncRowError `json:"errors,omitempty"`
+	Error     string         `json:"error,omitempty"`
+}
+
+// SyncRowError reports a per-row failure during bulk sync.
+type SyncRowError struct {
+	Index  int    `json:"index"`
+	Reason string `json:"reason"`
 }
 
 // ToEvent converts SyncEventInput to domain.Events
@@ -42,12 +49,12 @@ func (s *SyncEventInput) ToEvent() (domain.Events, error) {
 	}
 
 	return domain.Events{
-		Name:             s.Name,
-		Location:         s.Location,
-		State:            s.State,
-		Distance:         s.Distance,
-		Date:             parsedDate,
-		Description:      s.Description,
-		RegisterationURL: s.RegistrationURL,
+		Name:            s.Name,
+		Location:        s.Location,
+		State:           s.State,
+		Distance:        s.Distance,
+		Date:            parsedDate,
+		Description:     s.Description,
+		RegistrationURL: s.RegistrationURL,
 	}, nil
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aniqaqill/runners-list/internal/core/domain"
+	"github.com/aniqaqill/runners-list/internal/port"
 	"github.com/aniqaqill/runners-list/internal/port/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
@@ -87,24 +88,25 @@ var _ = Describe("EventService", func() {
 				{Name: "Event 1", Date: time.Now().AddDate(1, 0, 0)},
 				{Name: "Event 2", Date: time.Now().AddDate(1, 1, 0)},
 			}
+			filter := port.EventFilter{}
 
-			// Mock the FindAll method to return the events
 			mockRepo.EXPECT().
-				FindAll().
+				FindAll(filter).
 				Return(events, nil)
 
-			result, err := eventService.ListEvents()
+			result, err := eventService.ListEvents(filter)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(Equal(events))
 		})
 
 		It("should return an error if the repository fails", func() {
-			// Mock the FindAll method to return an error
+			filter := port.EventFilter{}
+
 			mockRepo.EXPECT().
-				FindAll().
+				FindAll(filter).
 				Return(nil, errors.New("repository error"))
 
-			_, err := eventService.ListEvents()
+			_, err := eventService.ListEvents(filter)
 			Expect(err).To(HaveOccurred())
 		})
 	})

@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	domain "github.com/aniqaqill/runners-list/internal/core/domain"
+	port "github.com/aniqaqill/runners-list/internal/port"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -77,18 +78,18 @@ func (mr *MockEventRepositoryMockRecorder) EventNameExists(name interface{}) *go
 }
 
 // FindAll mocks base method.
-func (m *MockEventRepository) FindAll() ([]domain.Events, error) {
+func (m *MockEventRepository) FindAll(filter port.EventFilter) ([]domain.Events, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAll")
+	ret := m.ctrl.Call(m, "FindAll", filter)
 	ret0, _ := ret[0].([]domain.Events)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindAll indicates an expected call of FindAll.
-func (mr *MockEventRepositoryMockRecorder) FindAll() *gomock.Call {
+func (mr *MockEventRepositoryMockRecorder) FindAll(filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockEventRepository)(nil).FindAll))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockEventRepository)(nil).FindAll), filter)
 }
 
 // FindByID mocks base method.
